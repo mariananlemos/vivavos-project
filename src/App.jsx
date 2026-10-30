@@ -46,9 +46,7 @@ export function App() {
   const handleAcceptConsent = () => {
     localStorage.setItem('vivavos-lgpd-consent', 'true');
     setHasConsent(true);
-    tts.speak(
-      'Obrigado! Toque em Foto do remédio para a caixa do remédio, ou em Foto do exame para o papel do exame.'
-    );
+    tts.stop();
   };
 
   // Abrir a câmera precisa acontecer dentro de um toque do usuário

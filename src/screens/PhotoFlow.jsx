@@ -8,14 +8,12 @@ import { ExamResult, examSpeech } from './ExamResult';
 const FLOWS = {
   medicine: {
     endpoint: '/api/identify-medicine',
-    processingSpeech: 'Estou lendo a caixinha do seu remédio. Aguarde um instante.',
     retakeHint: 'Tire a foto da frente da caixa, com boa luz.',
     Result: MedicineResult,
     resultSpeech: medicineSpeech,
   },
   exam: {
     endpoint: '/api/identify-exam',
-    processingSpeech: 'Estou lendo o seu exame. Aguarde um instante.',
     retakeHint: 'Tire a foto do papel bem de frente, com boa luz e sem cortar os números.',
     Result: ExamResult,
     resultSpeech: examSpeech,
@@ -51,7 +49,6 @@ export function PhotoFlow({ kind, file, onRetake, onHome, tts, voice, commandHan
         setErrorMessage(null);
         setPreview(null);
         stop();
-        speak(flow.processingSpeech);
 
         // 1. Redução da imagem no cliente (Canvas API)
         const compressed = await compressImage(file, { maxWidth: 1600, maxHeight: 1600, quality: 0.82 });
@@ -76,19 +73,16 @@ export function PhotoFlow({ kind, file, onRetake, onHome, tts, voice, commandHan
         // Regra 1: foto ilegível ou borrada → nunca adivinha, pede outra
         if (!result.isLegible) {
           setPhase('ILLEGIBLE');
-          speak(result.voicePrompt || `A foto não ficou nítida o suficiente. ${flow.retakeHint}`);
           return;
         }
 
         // Regra 2: confirmação OBRIGATÓRIA antes de qualquer explicação
         setPhase('CONFIRMING');
-        speak(result.confirmation.voiceText, () => startListening());
       } catch (err) {
         if (!isCurrent()) return;
         console.error('Erro no processamento da imagem:', err);
         setErrorMessage(err.message || 'Ocorreu um erro ao processar a foto.');
         setPhase('ERROR');
-        speak('Ops, aconteceu um probleminha ao ler a foto. Toque no botão para tentar de novo.');
       }
     })();
   }, [file]);
@@ -101,14 +95,12 @@ export function PhotoFlow({ kind, file, onRetake, onHome, tts, voice, commandHan
     stop();
     stopListening();
     setPhase('RESULT');
-    speak(flow.resultSpeech(data));
   };
 
   const handleRejectByVoice = () => {
     stop();
     stopListening();
     setPhase('RETAKE');
-    speak(`Tudo bem. Toque no botão azul para tirar outra foto. ${flow.retakeHint}`);
   };
 
   const handleRepeatConfirmation = () => {
@@ -155,6 +147,12 @@ export function PhotoFlow({ kind, file, onRetake, onHome, tts, voice, commandHan
     };
   }, [commandHandlerRef, handleVoiceCommand]);
 
+  const demoNotice = data?.usingMock && (
+    <div className="mb-4">
+      <Notice label="Modo demonstração:">este resultado é um exemplo e não veio da sua foto.</Notice>
+    </div>
+  );
+
   if (phase === 'PROCESSING') {
     return (
       <div aria-busy="true">
@@ -175,6 +173,7 @@ export function PhotoFlow({ kind, file, onRetake, onHome, tts, voice, commandHan
   if (phase === 'ILLEGIBLE' || phase === 'RETAKE' || phase === 'ERROR') {
     const title =
       phase === 'RETAKE' ? 'Vamos tirar outra foto' : phase === 'ERROR' ? 'Não consegui ler a foto' : 'Não consegui ler com certeza';
+    const isError = phase === 'ERROR';
     const reason =
       phase === 'ERROR'
         ? errorMessage
@@ -188,11 +187,18 @@ export function PhotoFlow({ kind, file, onRetake, onHome, tts, voice, commandHan
         <Title>{title}</Title>
         {reason && <p className="text-[1.1rem] mt-2">{reason}</p>}
         <div className="my-5">
-          <Notice label="O Vivavós nunca adivinha.">{flow.retakeHint}</Notice>
+          {isError ? (
+            <Notice label="Nada foi inventado.">O Vivavós só mostra resultados que realmente leu.</Notice>
+          ) : (
+            <Notice label="O Vivavós nunca adivinha.">{flow.retakeHint}</Notice>
+          )}
         </div>
         <div className="space-y-3">
           <Button icon={Camera} onClick={handleRetake}>
-            Tirar outra foto
+            {isError ? 'Tentar de novo' : 'Tirar outra foto'}
+          </Button>
+          <Button variant="accent" icon={Volume2} onClick={() => speak(`${title}. ${reason || ''} ${isError ? '' : flow.retakeHint}`)}>
+            Ouvir
           </Button>
           <Button variant="outlinePrimary" onClick={handleHome}>
             Voltar ao início
@@ -206,6 +212,7 @@ export function PhotoFlow({ kind, file, onRetake, onHome, tts, voice, commandHan
     return (
       <div>
         <BackLink onClick={handleHome} />
+        {demoNotice}
         <Title>Conferindo a foto</Title>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 items-center mt-4">
@@ -235,7 +242,7 @@ export function PhotoFlow({ kind, file, onRetake, onHome, tts, voice, commandHan
           </Button>
         </div>
         <Button variant="accent" icon={Volume2} onClick={handleRepeatConfirmation} className="mt-3">
-          Ouvir de novo
+          Ouvir o que li
         </Button>
 
         <Divider className="mt-5 mb-3" />
@@ -246,7 +253,12 @@ export function PhotoFlow({ kind, file, onRetake, onHome, tts, voice, commandHan
 
   if (phase === 'RESULT' && data) {
     const { Result } = flow;
-    return <Result data={data} onListen={handleListenResult} onHome={handleHome} />;
+    return (
+      <>
+        {demoNotice}
+        <Result data={data} onListen={handleListenResult} onHome={handleHome} />
+      </>
+    );
   }
 
   return null;

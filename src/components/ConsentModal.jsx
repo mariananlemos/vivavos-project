@@ -1,21 +1,13 @@
-import React, { useEffect } from 'react';
-import { Check, Lock } from 'lucide-react';
+import React from 'react';
+import { Check, Lock, Volume2 } from 'lucide-react';
 import { Button } from './ui';
 
-export function ConsentModal({ isOpen, onAccept, tts, voice }) {
-  const { speak } = tts;
-  const { startListening } = voice;
+const CONSENT_TEXT =
+  'Para sua segurança e privacidade, a foto do remédio ou do exame é lida na hora e apagada em seguida. Nenhuma foto ou dado pessoal fica guardado. Você concorda em continuar? Diga Concordo ou toque no botão azul.';
 
-  useEffect(() => {
-    if (isOpen) {
-      const consentText =
-        'Olá! Para sua segurança e privacidade, a foto do remédio ou do exame é analisada na hora e apagada imediatamente. Não guardamos suas fotos. Você concorda em continuar? Diga Concordo ou toque no botão azul.';
-      speak(consentText, () => {
-        // Inicia escuta automaticamente após ler o aviso
-        startListening();
-      });
-    }
-  }, [isOpen]);
+export function ConsentModal({ isOpen, onAccept, tts, voice }) {
+  // Só fala quando a pessoa pede; depois do aviso, o microfone abre para ouvir "Concordo"
+  const handleListen = () => tts.speak(CONSENT_TEXT, () => voice.startListening());
 
   if (!isOpen) return null;
 
@@ -47,9 +39,9 @@ export function ConsentModal({ isOpen, onAccept, tts, voice }) {
         <Button icon={Check} onClick={onAccept} aria-label="Concordo e quero continuar">
           Concordo e continuar
         </Button>
-        <p className="text-center text-[0.85rem] text-muted mt-3">
-          Você também pode dizer: <strong>“Concordo”</strong>
-        </p>
+        <Button variant="accent" icon={Volume2} onClick={handleListen} className="mt-3">
+          Ouvir este aviso
+        </Button>
       </div>
     </div>
   );

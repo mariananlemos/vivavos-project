@@ -1,5 +1,6 @@
 import { getVisionProvider } from './_lib/vision/index.js';
 import { guardRequest } from './_lib/http/guard.js';
+import { hasVisionKey, isDemoAllowed, VISION_UNAVAILABLE } from './_lib/vision/availability.js';
 import { searchOfficialBula } from './_lib/bulario/anvisaService.js';
 
 export default async function handler(req, res) {
@@ -36,7 +37,12 @@ export default async function handler(req, res) {
     }
 
     let visionResult;
-    const hasApiKey = Boolean(process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== 'sua-chave-aqui');
+    const hasApiKey = hasVisionKey();
+
+    if (!hasApiKey && !isDemoAllowed()) {
+      const { status, code, message } = VISION_UNAVAILABLE;
+      return res.status(status).json({ error: { code, message } });
+    }
 
     if (!hasApiKey) {
       // Modo de demonstração instrutivo para permitir que o usuário teste a interface de voz

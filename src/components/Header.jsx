@@ -15,7 +15,7 @@ export function Header({ onNavigate }) {
   };
 
   return (
-    <header role="banner" className="bg-surface border-t-[6px] border-primary border-b-2 border-b-strong">
+    <header role="banner" className="sticky top-0 z-30 bg-surface border-t-[6px] border-primary border-b-2 border-b-strong">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
         <a href="#inicio" onClick={go('inicio')} className="flex items-center gap-2.5" aria-label="Vivavós, página inicial">
           <span className="w-10 h-10 rounded-md bg-primary flex items-center justify-center" aria-hidden="true">

@@ -4,7 +4,7 @@
 
 🔗 **Acesse:** https://vivavos.vercel.app/
 
-O Vivavós é um site que ajuda **pessoas idosas** a entender **remédios** e **exames**. A pessoa tira (ou envia) uma foto da caixa do remédio ou do papel do exame, e o Vivavós lê o que está escrito e explica **em voz alta, em português do Brasil**, com palavras simples.
+O Vivavós é um site que ajuda **pessoas idosas** a entender **remédios** e **exames**. A pessoa tira (ou envia) uma foto da caixa do remédio ou do papel do exame, e o Vivavós lê o que está escrito e explica com palavras simples. Tocando em **Ouvir**, a explicação é falada **em português do Brasil**.
 
 ## Projeto acadêmico
 
@@ -20,7 +20,7 @@ Projeto desenvolvido na **Universidade Federal do ABC (UFABC)** para a disciplin
 ## Como funciona
 
 1. **Tire ou envie a foto:** da caixa do remédio ou do resultado do exame.
-2. **Confira o que foi lido:** o site fala o que leu e pergunta “Está certo?”. A pessoa responde com a voz (“sim” / “não”) ou com os botões.
+2. **Confira o que foi lido:** o site mostra o que leu e pergunta “Está certo?”. A pessoa responde com os botões ou, depois de tocar em Ouvir, com a voz (“sim” / “não”).
 3. **Ouça a explicação:** só depois da confirmação, o site explica:
    - **Remédio:** para que serve, como tomar, cuidados e uso com outros remédios, a partir da bula registrada na ANVISA.
    - **Exame:** o resultado, se ficou dentro, acima ou abaixo do valor esperado **impresso no próprio laudo**, e o que fazer.
@@ -38,7 +38,7 @@ Projeto desenvolvido na **Universidade Federal do ABC (UFABC)** para a disciplin
 Pensado para o público idoso e seguindo as recomendações do governo (eMAG):
 
 - **Libras** com o [VLibras](https://github.com/spbgovbr-vlibras) (widget oficial do Governo Federal).
-- **Voz em português do Brasil** com a API de voz da OpenAI, com a voz do navegador como reserva. A velocidade é ajustável.
+- **Voz em português do Brasil** com a API de voz da OpenAI, com a voz do navegador como reserva. Ela só fala quando a pessoa toca em um botão de ouvir, e a velocidade é ajustável.
 - **Comandos de voz:** “sim”, “não”, “de novo”, “mais devagar”, “mais rápido”.
 - **Letra maior** (A− / A+) e **alto contraste**.
 - **Atalhos de teclado:** Alt+1 (conteúdo), Alt+2 (menu), Alt+3 (rodapé).
@@ -86,7 +86,7 @@ Pensado para o público idoso e seguindo as recomendações do governo (eMAG):
 
 5. Abra http://localhost:5173 no **Google Chrome** ou no **Microsoft Edge** (os comandos de voz funcionam melhor nesses navegadores).
 
-> Sem a chave da OpenAI, o site abre em **modo demonstração**: a interface funciona, mas a leitura sempre mostra resultados de exemplo e a voz usa a do navegador.
+> Sem a chave da OpenAI, o site **no seu computador** abre em **modo demonstração**: a leitura mostra resultados de exemplo, com um aviso na tela, e a voz usa a do navegador. **No site publicado, sem a chave, a leitura fica indisponível** e nenhum resultado é mostrado.
 
 ## Publicar na Vercel
 

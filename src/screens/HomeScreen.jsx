@@ -59,7 +59,7 @@ function Section({ id, title, intro, tone = 'page', children }) {
       id={id}
       tabIndex={-1}
       aria-labelledby={`${id}-titulo`}
-      className={`${tone === 'page' ? 'bg-page' : 'bg-surface'} border-t border-line scroll-mt-4`}
+      className={`${tone === 'page' ? 'bg-page' : 'bg-surface'} border-t border-line scroll-mt-32 md:scroll-mt-24`}
     >
       <div className="max-w-5xl mx-auto px-4 sm:px-6 py-12">
         <h2 id={`${id}-titulo`} className="text-[1.8rem] font-bold leading-tight">
@@ -86,10 +86,13 @@ function FeatureItem({ icon: Icon, title, children }) {
   );
 }
 
+const HOME_INSTRUCTIONS =
+  'Toque em Foto do remédio para a caixa do remédio, ou em Foto do exame para o papel do exame. Depois, confira o que eu li e toque em Ouvir para escutar a explicação.';
+
 const STEPS = [
   { icon: Camera, title: 'Tire ou envie a foto', text: 'Da frente da caixa do remédio ou do papel do exame, com boa luz.' },
-  { icon: ScanSearch, title: 'Confira o que eu li', text: 'Eu falo o nome que li e pergunto: “Está certo?”. Responda com a voz ou com o botão.' },
-  { icon: Volume2, title: 'Ouça a explicação', text: 'Só depois de você confirmar, eu explico em voz alta e em palavras simples.' },
+  { icon: ScanSearch, title: 'Confira o que eu li', text: 'Eu mostro o nome que li e pergunto: “Está certo?”. Toque em Sim ou Não.' },
+  { icon: Volume2, title: 'Ouça a explicação', text: 'Só depois de você confirmar, eu explico em palavras simples. Toque em Ouvir para escutar.' },
 ];
 
 export function HomeScreen({ onPickPhoto, tts, voice, commandHandlerRef }) {
@@ -126,7 +129,7 @@ export function HomeScreen({ onPickPhoto, tts, voice, commandHandlerRef }) {
   return (
     <>
       {/* Início: ação principal */}
-      <section id="inicio" tabIndex={-1} aria-labelledby="inicio-titulo" className="bg-surface scroll-mt-4">
+      <section id="inicio" tabIndex={-1} aria-labelledby="inicio-titulo" className="bg-surface scroll-mt-32 md:scroll-mt-24">
         {/* No celular: título, cards, voz. No computador: título e voz à esquerda, cards à direita */}
         <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 md:py-14 grid gap-x-10 gap-y-6 md:grid-cols-[1fr_1.15fr] md:items-center">
           <div className="md:self-end">
@@ -134,7 +137,7 @@ export function HomeScreen({ onPickPhoto, tts, voice, commandHandlerRef }) {
               O que você quer entender hoje?
             </h1>
             <p className="mt-3 text-[1.1rem] max-w-md">
-              Mostre a caixa do remédio ou o papel do exame. O Vivavós lê e explica em voz alta, com palavras simples.
+              Mostre a caixa do remédio ou o papel do exame. O Vivavós lê e explica com palavras simples. Se quiser, toque para ouvir.
             </p>
           </div>
 
@@ -163,6 +166,14 @@ export function HomeScreen({ onPickPhoto, tts, voice, commandHandlerRef }) {
             <p className="mb-2 text-[0.95rem]">Ou diga: “Vivavós, que remédio é esse?”</p>
             <Button variant="accent" icon={Mic} onClick={handleTalk} className="min-h-[3.75rem] text-[1.25rem] md:max-w-sm">
               Toque e fale
+            </Button>
+            <Button
+              variant="outline"
+              icon={Volume2}
+              onClick={() => speak(HOME_INSTRUCTIONS)}
+              className="mt-3 md:max-w-sm"
+            >
+              Ouvir as instruções
             </Button>
             {voice.error && (
               <p role="alert" className="mt-2 text-[0.9rem] font-bold text-danger">
@@ -201,7 +212,7 @@ export function HomeScreen({ onPickPhoto, tts, voice, commandHandlerRef }) {
             Se a foto estiver borrada, escura ou cortada, eu peço outra foto em vez de chutar.
           </FeatureItem>
           <FeatureItem icon={CircleCheck} title="Confirma antes de explicar">
-            Eu sempre falo o que li e espero você dizer que está certo.
+            Eu sempre mostro o que li e espero você confirmar que está certo.
           </FeatureItem>
           <FeatureItem icon={Landmark} title="Fonte oficial">
             Remédios: bula registrada na ANVISA. Exames: o valor esperado impresso no próprio laudo.
@@ -228,7 +239,7 @@ export function HomeScreen({ onPickPhoto, tts, voice, commandHandlerRef }) {
             Toque no ícone azul de mãos, no lado direito da tela, para ver o conteúdo traduzido para Libras.
           </FeatureItem>
           <FeatureItem icon={Ear} title="Voz em português do Brasil">
-            Tudo é lido em voz alta. Use os botões 🐢 e 🐇 no topo da página para deixar a fala mais devagar ou mais
+            A voz só fala quando você toca em um botão de ouvir. Use os botões 🐢 e 🐇 no topo da página para deixar a fala mais devagar ou mais
             rápida.
           </FeatureItem>
           <FeatureItem icon={Mic} title="Comandos de voz">
