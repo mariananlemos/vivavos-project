@@ -12,10 +12,10 @@ Projeto desenvolvido na **Universidade Federal do ABC (UFABC)** para a disciplin
 
 **Alunos:**
 
-- Gabriela Bernardes
-- Raissa Galdino
-- Mariana Lemos
 - Gabriel Lima
+- Gabriela Bernardes
+- - Mariana Lemos
+- Raissa Galdino
 
 ## Como funciona
 
