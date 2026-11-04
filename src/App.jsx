@@ -28,12 +28,12 @@ const EXTRA_TRIES = { normal: 0, longo: 2, 'muito-longo': 4 };
 export function App() {
   const accessibility = useAccessibility();
   const { prefs } = accessibility;
-  const tts = useTextToSpeech(0.85, {
+  const tts = useTextToSpeech(1, {
     autoSpeak: prefs.autoSpeak,
     volume: prefs.volume,
     voiceEngine: prefs.voiceEngine,
     pitch: prefs.pitch,
-  }); // Velocidade inicial calma para idosos (0.85x)
+  }); // Começa na velocidade normal (1x); dá para ajustar de 0.6x a 1.3x
   const history = useHistory();
   const { toasts, dismiss, notify, flashKey } = useNotifications(prefs, tts);
 

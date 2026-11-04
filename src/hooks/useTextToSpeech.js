@@ -3,8 +3,10 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 // Vozes brasileiras mais naturais primeiro (Edge, Chrome, Windows, Apple)
 const PREFERRED_PT_BR_VOICES = ['Francisca', 'Thalita', 'Antonio', 'Google', 'Luciana', 'Maria', 'Daniel', 'Felipe'];
 
-// Velocidade "normal" da escala do app; a voz da OpenAI toca em 1x nesse ponto
-const BASE_RATE = 0.85;
+// Velocidade "normal" (1x): a voz da OpenAI e a do aparelho tocam na velocidade natural
+const BASE_RATE = 1;
+// Chave nova: quem tinha o antigo padrão 0.85 salvo volta para 1x
+const RATE_STORAGE_KEY = 'vivavos-speech-rate-v2';
 const MAX_CACHED_AUDIOS = 30;
 
 // WAV mudo de poucos bytes, tocado no primeiro toque para o celular liberar o áudio depois
@@ -56,7 +58,7 @@ export function useTextToSpeech(initialRate = BASE_RATE, options = {}) {
   optionsRef.current = options;
   const [isSupported] = useState(() => typeof window !== 'undefined' && ('Audio' in window || 'speechSynthesis' in window));
   const [rate, setRate] = useState(() => {
-    const saved = localStorage.getItem('vivavos-speech-rate');
+    const saved = localStorage.getItem(RATE_STORAGE_KEY);
     return saved ? parseFloat(saved) : initialRate;
   });
 
@@ -100,7 +102,7 @@ export function useTextToSpeech(initialRate = BASE_RATE, options = {}) {
   }, [options.volume]);
 
   useEffect(() => {
-    localStorage.setItem('vivavos-speech-rate', rate.toString());
+    localStorage.setItem(RATE_STORAGE_KEY, rate.toString());
     if (audioRef.current) audioRef.current.playbackRate = rate / BASE_RATE;
   }, [rate]);
 
