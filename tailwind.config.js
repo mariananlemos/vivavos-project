@@ -20,14 +20,14 @@ export default {
         'on-primary': 'var(--c-on-primary)',
         accent: 'var(--c-accent)',
         'on-accent': 'var(--c-on-accent)',
-        'logo-wave': 'var(--c-logo-wave)',
         'warn-soft': 'var(--c-warn-soft)',
         ok: 'var(--c-ok)',
         'ok-soft': 'var(--c-ok-soft)',
         danger: 'var(--c-danger)',
       },
       fontFamily: {
-        sans: ['"Atkinson Hyperlegible"', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],
+        // Tipo de letra escolhido em "Ajustes de acessibilidade" (src/index.css)
+        sans: ['var(--font-body)'],
       },
       boxShadow: {
         card: '0 10px 30px -12px rgba(19, 23, 26, 0.25)',

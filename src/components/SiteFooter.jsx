@@ -36,7 +36,7 @@ export function SiteFooter({ onNavigate }) {
           <p className="font-bold mb-2">Aviso importante</p>
           <p className="text-[0.95rem]">
             Este site ajuda você a ler. Ele não substitui o médico nem o farmacêutico. As fotos são apagadas logo
-            depois da leitura (LGPD).
+            depois da leitura, e o histórico fica só neste aparelho (LGPD).
           </p>
         </div>
       </div>

@@ -1,13 +1,14 @@
 import React from 'react';
-import { Check, Lock, Volume2 } from 'lucide-react';
+import { Check, History, Lock, Volume2 } from 'lucide-react';
 import { Button } from './ui';
 
 const CONSENT_TEXT =
-  'Para sua segurança e privacidade, a foto do remédio ou do exame é lida na hora e apagada em seguida. Nenhuma foto ou dado pessoal fica guardado. Você concorda em continuar? Diga Concordo ou toque no botão azul.';
+  'Para sua segurança e privacidade, a foto do remédio ou do exame é analisada na hora e apagada imediatamente. Não guardamos suas fotos. O que você confirmar fica no seu histórico, só neste aparelho, e você pode apagar quando quiser. Você concorda em continuar? Diga Concordo ou toque no botão azul.';
 
 export function ConsentModal({ isOpen, onAccept, tts, voice }) {
   // Só fala quando a pessoa pede; depois do aviso, o microfone abre para ouvir "Concordo"
-  const handleListen = () => tts.speak(CONSENT_TEXT, () => voice.startListening());
+  const handleListen = () =>
+    tts.speak(CONSENT_TEXT, () => voice.startListening(), { manual: true });
 
   if (!isOpen) return null;
 
@@ -32,7 +33,14 @@ export function ConsentModal({ isOpen, onAccept, tts, voice }) {
           </li>
           <li className="flex items-start gap-3">
             <Check className="w-6 h-6 shrink-0 mt-0.5 text-primary" aria-hidden="true" />
-            <span>Nenhuma foto ou dado pessoal fica guardado.</span>
+            <span>Nenhuma foto vai para lugar nenhum. Não pedimos nome nem cadastro.</span>
+          </li>
+          <li className="flex items-start gap-3">
+            <History className="w-6 h-6 shrink-0 mt-0.5 text-primary" aria-hidden="true" />
+            <span>
+              O que você confirmar fica no seu <strong>histórico, só neste aparelho</strong>. Você pode desligar ou apagar
+              quando quiser.
+            </span>
           </li>
         </ul>
 

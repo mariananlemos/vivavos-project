@@ -16,15 +16,25 @@
     --c-on-primary: #FFFFFF;
     --c-accent: #FEB938;
     --c-on-accent: #13171A;
-    --c-logo-wave: #FEB938;
     --c-warn-soft: #FFF3D9;
     --c-ok: #1E7B4C;
     --c-ok-soft: #E2F2E9;
     --c-danger: #B42318;
+
+    /* Logo do casal de vovós */
+    --c-logo-bg: #0A4F8A;
+    --c-logo-ring: transparent;
+    --c-logo-hair: #FFFFFF;
+    --c-logo-skin: #F6C9A4;
+    --c-logo-line: #13171A;
+    --c-logo-grandma: #FEB938;
+    --c-logo-grandpa: #E3EBF6;
+
+    --font-body: 'Atkinson Hyperlegible', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   }
 
-  /* Modo de Alto Contraste para baixa visão ou catarata */
-  html.high-contrast {
+  /* Alto contraste para baixa visão ou catarata */
+  html[data-theme='alto-contraste'] {
     --c-page: #000000;
     --c-surface: #000000;
     --c-ink: #FFFFFF;
@@ -37,11 +47,76 @@
     --c-on-primary: #000000;
     --c-accent: #FFDF00;
     --c-on-accent: #000000;
-    --c-logo-wave: #000000;
     --c-warn-soft: #1A1A1A;
     --c-ok: #4ADE80;
     --c-ok-soft: #0F2A1A;
     --c-danger: #FF8A80;
+
+    --c-logo-bg: #000000;
+    --c-logo-ring: #FFDF00;
+    --c-logo-grandma: #FFDF00;
+    --c-logo-grandpa: #FFFFFF;
+  }
+
+  /* Escuro: menos luz na tela, bom à noite */
+  html[data-theme='escuro'] {
+    --c-page: #0F1419;
+    --c-surface: #1A2129;
+    --c-ink: #F1F4F7;
+    --c-muted: #B8C2CC;
+    --c-line: #3A4652;
+    --c-strong: #C9D3DD;
+    --c-primary: #8EC3F5;
+    --c-primary-soft: #1F3347;
+    --c-primary-icon: #B9DAF8;
+    --c-on-primary: #0B1620;
+    --c-accent: #FEB938;
+    --c-on-accent: #13171A;
+    --c-warn-soft: #3A2F14;
+    --c-ok: #5FD39A;
+    --c-ok-soft: #12301F;
+    --c-danger: #FF8A80;
+
+    --c-logo-ring: #8EC3F5;
+  }
+
+  /* Suave: fundo creme, menos brilho e menos azul */
+  html[data-theme='suave'] {
+    --c-page: #EDE4D3;
+    --c-surface: #F8F1E3;
+    --c-ink: #2B2118;
+    --c-muted: #5C4E3F;
+    --c-line: #D8CAB2;
+    --c-strong: #3B2F24;
+    --c-primary: #1F4E79;
+    --c-primary-soft: #E6DCC8;
+    --c-primary-icon: #43709A;
+    --c-warn-soft: #FBE9C6;
+    --c-ok-soft: #E3EEDC;
+
+    --c-logo-bg: #1F4E79;
+  }
+
+  /* Cor da letra (só nos temas claros, para não estragar o contraste) */
+  html[data-ink='preto']:is([data-theme='padrao'], [data-theme='suave']) {
+    --c-ink: #000000;
+    --c-strong: #000000;
+  }
+  html[data-ink='azul']:is([data-theme='padrao'], [data-theme='suave']) {
+    --c-ink: #0B2545;
+    --c-strong: #0B2545;
+  }
+  html[data-ink='marrom']:is([data-theme='padrao'], [data-theme='suave']) {
+    --c-ink: #3E2A1A;
+    --c-strong: #3E2A1A;
+  }
+
+  /* Tipos de letra */
+  html[data-font='lexend'] {
+    --font-body: 'Lexend', system-ui, sans-serif;
+  }
+  html[data-font='sistema'] {
+    --font-body: Verdana, Tahoma, 'Segoe UI', Arial, sans-serif;
   }
 
   html {
@@ -57,10 +132,106 @@
   }
 }
 
+/* Ampliação da tela inteira */
+.app-zoom {
+  zoom: var(--page-zoom, 1);
+}
+
+/* Seções e páginas recebem foco por código (atalhos e menu): o leitor de tela anuncia, sem moldura na tela */
+[tabindex='-1']:focus:not(:focus-visible),
+main[tabindex='-1']:focus,
+section[tabindex='-1']:focus {
+  outline: none;
+}
+
 /* Foco acessível por teclado e leitor de tela */
-button:focus-visible, a:focus-visible, input:focus-visible {
+button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible {
   outline: 4px solid var(--c-accent) !important;
   outline-offset: 3px;
+}
+/* Opções com o botão de rádio escondido: o foco aparece na caixa inteira */
+label:has(> input.sr-only:focus-visible) {
+  outline: 4px solid var(--c-accent);
+  outline-offset: 3px;
+}
+
+/* Foco reforçado: anel amarelo largo com borda escura, visível em qualquer fundo */
+html.strong-focus :focus-visible,
+html.strong-focus label:has(> input.sr-only:focus-visible) {
+  outline: 6px solid var(--c-accent) !important;
+  outline-offset: 4px !important;
+  box-shadow: 0 0 0 12px var(--c-ink) !important;
+}
+
+/* Letras mais grossas */
+html.bold-text body * {
+  font-weight: 700 !important;
+}
+
+/* Espaço entre linhas e entre letras */
+html[data-line='amplo'] body * {
+  line-height: 1.85 !important;
+}
+html[data-line='muito-amplo'] body * {
+  line-height: 2.2 !important;
+}
+html[data-letter='amplo'] body * {
+  letter-spacing: 0.06em !important;
+  word-spacing: 0.14em !important;
+}
+html[data-letter='muito-amplo'] body * {
+  letter-spacing: 0.12em !important;
+  word-spacing: 0.28em !important;
+}
+
+/* Botões e campos maiores, mais fáceis de acertar com o dedo */
+html.big-targets :is(button, select, input:not([type='radio']):not([type='checkbox']), label:has(> input)) {
+  min-height: 3.5rem !important;
+}
+html.big-targets button {
+  min-width: 3.5rem !important;
+}
+
+/* Cursor grande: seta preta com borda branca; amarela sobre o que dá para tocar */
+html.big-cursor,
+html.big-cursor * {
+  cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'><path d='M6 4v36l10-9 7 15 7-3-7-15h14z' fill='black' stroke='white' stroke-width='3' stroke-linejoin='round'/></svg>") 6 4, auto !important;
+}
+html.big-cursor :is(a, button, label, select, summary, [role='button'], [role='switch']),
+html.big-cursor :is(a, button, label, select, summary, [role='button'], [role='switch']) * {
+  cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'><path d='M6 4v36l10-9 7 15 7-3-7-15h14z' fill='%23FEB938' stroke='black' stroke-width='3' stroke-linejoin='round'/></svg>") 6 4, pointer !important;
+}
+html.big-cursor :is(input:not([type='radio']):not([type='checkbox']):not([type='range']), textarea) {
+  cursor: text !important;
+}
+
+/* Parar animações e movimentos */
+html.reduce-motion *,
+html.reduce-motion *::before,
+html.reduce-motion *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* Esconder o botão do VLibras */
+html.hide-libras [vw] {
+  display: none !important;
+}
+
+/* Aviso visual: a tela pisca duas vezes (abaixo de 3 vezes por segundo, seguro para fotossensibilidade) */
+@keyframes alert-flash {
+  0%, 50%, 100% {
+    opacity: 0;
+  }
+  20%, 70% {
+    opacity: 0.55;
+  }
+}
+.flash-overlay,
+html.reduce-motion .flash-overlay {
+  animation: alert-flash 1.2s ease-in-out 1 forwards !important;
 }
 
 /* Menu com rolagem lateral no celular, sem barra visível */

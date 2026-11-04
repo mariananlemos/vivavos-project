@@ -42,9 +42,18 @@ async function fetchSpeechAudio(text) {
  * Fala em português do Brasil.
  * 1º: voz da OpenAI (sotaque brasileiro garantido), via /api/speak.
  * 2º (reserva): voz do próprio navegador, só se houver voz pt-BR ou se a OpenAI falhar.
+ *
+ * options (ajustes de acessibilidade): autoSpeak, volume (0 a 1), voiceEngine ('natural' | 'aparelho'), pitch.
+ * speak(texto, aoTerminar, { manual, quick }):
+ * - manual: a pessoa pediu para ouvir; fala mesmo com "Falar sozinho" desligado.
+ * - quick: usa a voz do aparelho, que responde na hora (leitura de toque e de digitação).
  */
-export function useTextToSpeech(initialRate = BASE_RATE) {
+export function useTextToSpeech(initialRate = BASE_RATE, options = {}) {
   const [isSpeaking, setIsSpeaking] = useState(false);
+  // Texto que está sendo falado e a posição aproximada, para a legenda
+  const [caption, setCaption] = useState(null);
+  const optionsRef = useRef(options);
+  optionsRef.current = options;
   const [isSupported] = useState(() => typeof window !== 'undefined' && ('Audio' in window || 'speechSynthesis' in window));
   const [rate, setRate] = useState(() => {
     const saved = localStorage.getItem('vivavos-speech-rate');
@@ -87,6 +96,10 @@ export function useTextToSpeech(initialRate = BASE_RATE) {
   }, []);
 
   useEffect(() => {
+    if (audioRef.current) audioRef.current.volume = options.volume ?? 1;
+  }, [options.volume]);
+
+  useEffect(() => {
     localStorage.setItem('vivavos-speech-rate', rate.toString());
     if (audioRef.current) audioRef.current.playbackRate = rate / BASE_RATE;
   }, [rate]);
@@ -102,20 +115,27 @@ export function useTextToSpeech(initialRate = BASE_RATE) {
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'pt-BR';
       utterance.rate = rate; // Ajustado para compreensão de idosos
-      utterance.pitch = 1.0;
+      utterance.pitch = optionsRef.current.pitch ?? 1;
+      utterance.volume = optionsRef.current.volume ?? 1;
 
       // Usa somente vozes do português do Brasil; sem nenhuma, o navegador escolhe pelo lang pt-BR
       const ptBrVoice = pickBrazilianVoice(window.speechSynthesis.getVoices());
       if (ptBrVoice) utterance.voice = ptBrVoice;
 
+      utterance.onboundary = (e) => {
+        if (speechId === speechIdRef.current) setCaption({ text, charIndex: e.charIndex });
+      };
       utterance.onend = () => {
         if (speechId !== speechIdRef.current) return;
         setIsSpeaking(false);
+        setCaption(null);
         if (onEndCallback) onEndCallback();
       };
       utterance.onerror = (e) => {
         console.warn('Erro na síntese de fala:', e);
-        if (speechId === speechIdRef.current) setIsSpeaking(false);
+        if (speechId !== speechIdRef.current) return;
+        setIsSpeaking(false);
+        setCaption(null);
       };
 
       window.speechSynthesis.speak(utterance);
@@ -137,26 +157,41 @@ export function useTextToSpeech(initialRate = BASE_RATE) {
   }, []);
 
   const speak = useCallback(
-    async (text, onEndCallback) => {
+    async (text, onEndCallback, { manual = false, quick = false } = {}) => {
       if (!text) return;
+      const opts = optionsRef.current;
+
+      // "Falar sozinho" desligado: só fala quando a pessoa pede
+      if (!manual && opts.autoSpeak === false) {
+        if (onEndCallback) onEndCallback();
+        return;
+      }
 
       // Cancela fala anterior
       const speechId = ++speechIdRef.current;
       audioRef.current?.pause();
       window.speechSynthesis?.cancel();
       setIsSpeaking(true);
+      setCaption({ text, charIndex: 0 });
 
       const audio = audioRef.current;
-      if (audio && serverVoiceAvailableRef.current) {
+      const useServerVoice = !quick && opts.voiceEngine !== 'aparelho' && serverVoiceAvailableRef.current;
+      if (audio && useServerVoice) {
         try {
           const url = await getAudioUrl(text);
           if (speechId !== speechIdRef.current) return;
 
           audio.src = url;
           audio.playbackRate = rate / BASE_RATE;
+          audio.volume = opts.volume ?? 1;
+          audio.ontimeupdate = () => {
+            if (speechId !== speechIdRef.current || !audio.duration) return;
+            setCaption({ text, charIndex: Math.floor((text.length * audio.currentTime) / audio.duration) });
+          };
           audio.onended = () => {
             if (speechId !== speechIdRef.current) return;
             setIsSpeaking(false);
+            setCaption(null);
             if (onEndCallback) onEndCallback();
           };
           audio.onerror = null;
@@ -180,6 +215,7 @@ export function useTextToSpeech(initialRate = BASE_RATE) {
     audioRef.current?.pause();
     window.speechSynthesis?.cancel();
     setIsSpeaking(false);
+    setCaption(null);
   }, []);
 
   const increaseSpeed = useCallback(() => {
@@ -200,6 +236,7 @@ export function useTextToSpeech(initialRate = BASE_RATE) {
     speak,
     stop,
     isSpeaking,
+    caption,
     isSupported,
     rate,
     setRate,

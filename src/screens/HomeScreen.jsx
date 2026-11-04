@@ -5,12 +5,14 @@ import {
   Ear,
   FileText,
   Hand,
+  History,
   Keyboard,
   Landmark,
   Lock,
   Mic,
   Contrast,
   ScanSearch,
+  Settings2,
   ShieldCheck,
   Stethoscope,
   Type,
@@ -95,22 +97,31 @@ const STEPS = [
   { icon: Volume2, title: 'Ouça a explicação', text: 'Só depois de você confirmar, eu explico em palavras simples. Toque em Ouvir para escutar.' },
 ];
 
-export function HomeScreen({ onPickPhoto, tts, voice, commandHandlerRef }) {
+export function HomeScreen({ onPickPhoto, onNavigate, historyCount, tts, voice, commandHandlerRef }) {
   const { speak, stop } = tts;
 
   // Pela voz não dá para abrir a câmera (o navegador exige um toque), então orientamos qual botão tocar
   const handleVoiceCommand = useCallback(
     (command) => {
       const text = normalize(command.text);
-      if (text.includes('exame')) {
-        speak('Para o exame, toque no botão branco, Foto do exame, e mostre o papel bem de frente.');
+      // Ir para outra página não precisa de toque, então a voz já pode abrir
+      if (text.includes('historico')) {
+        onNavigate('historico');
+      } else if (text.includes('ajuste') || text.includes('acessibilidade')) {
+        onNavigate('ajustes');
+      } else if (text.includes('exame')) {
+        speak('Para o exame, toque no botão branco, Foto do exame, e mostre o papel bem de frente.', null, { manual: true });
       } else if (text.includes('remedio') || text.includes('caixa') || text.includes('bula')) {
-        speak('Para o remédio, toque no botão azul, Foto do remédio, e mostre a caixa bem de frente.');
+        speak('Para o remédio, toque no botão azul, Foto do remédio, e mostre a caixa bem de frente.', null, { manual: true });
       } else {
-        speak('Toque em Foto do remédio para a caixa do remédio, ou em Foto do exame para o papel do exame.');
+        speak(
+          'Toque em Foto do remédio para a caixa do remédio, ou em Foto do exame para o papel do exame. Para ver o que você já conferiu, diga: histórico.',
+          null,
+          { manual: true }
+        );
       }
     },
-    [speak]
+    [speak, onNavigate]
   );
 
   useEffect(() => {
@@ -160,6 +171,24 @@ export function HomeScreen({ onPickPhoto, tts, voice, commandHandlerRef }) {
               />
             </div>
             <p className="mt-3 text-[0.9rem] text-muted">Pode tirar a foto agora ou escolher uma que já está no celular.</p>
+            <a
+              href="#historico"
+              onClick={(e) => {
+                e.preventDefault();
+                onNavigate('historico');
+              }}
+              className="mt-4 flex items-center gap-3 min-h-[3.5rem] px-4 py-2 rounded-lg border-2 border-line bg-page hover:border-strong"
+            >
+              <History className="w-6 h-6 shrink-0 text-primary" strokeWidth={2.25} aria-hidden="true" />
+              <span className="flex-1">
+                <span className="block font-bold text-primary">Meu histórico</span>
+                <span className="block text-[0.9rem] text-muted">
+                  {historyCount > 0
+                    ? `${historyCount} ${historyCount === 1 ? 'remédio ou exame guardado' : 'remédios e exames guardados'}`
+                    : 'Remédios e exames que você conferir ficam aqui'}
+                </span>
+              </span>
+            </a>
           </div>
 
           <div className="md:self-start">
@@ -170,7 +199,7 @@ export function HomeScreen({ onPickPhoto, tts, voice, commandHandlerRef }) {
             <Button
               variant="outline"
               icon={Volume2}
-              onClick={() => speak(HOME_INSTRUCTIONS)}
+              onClick={() => speak(HOME_INSTRUCTIONS, null, { manual: true })}
               className="mt-3 md:max-w-sm"
             >
               Ouvir as instruções
@@ -221,7 +250,8 @@ export function HomeScreen({ onPickPhoto, tts, voice, commandHandlerRef }) {
             As explicações ajudam a ler. Quem orienta o tratamento é o seu médico ou farmacêutico.
           </FeatureItem>
           <FeatureItem icon={Lock} title="Privacidade (LGPD)">
-            As fotos são lidas na hora e apagadas em seguida. Nada fica guardado.
+            As fotos são lidas na hora e apagadas em seguida. O histórico guarda só o texto, só neste aparelho, e você
+            apaga quando quiser.
           </FeatureItem>
           <FeatureItem icon={ShieldCheck} title="Sem cadastro">
             Você não precisa criar conta nem informar dados pessoais.
@@ -234,6 +264,18 @@ export function HomeScreen({ onPickPhoto, tts, voice, commandHandlerRef }) {
         title="Acessibilidade"
         intro="O Vivavós segue as recomendações de acessibilidade do governo (eMAG) para que todos consigam usar."
       >
+        <div className="mb-5 p-5 rounded-lg bg-primary-soft border-2 border-primary flex flex-col sm:flex-row sm:items-center gap-4">
+          <div className="flex-1">
+            <h3 className="text-[1.2rem] font-bold">Deixe o Vivavós do seu jeito</h3>
+            <p className="mt-1">
+              Cores, brilho, tipo e espaço da letra, volume e voz, legendas, lupa, toque, avisos e gestos: são 8 grupos de
+              ajustes.
+            </p>
+          </div>
+          <Button icon={Settings2} onClick={() => onNavigate('ajustes')} className="sm:w-auto shrink-0">
+            Abrir os ajustes
+          </Button>
+        </div>
         <ul className="grid gap-4 md:grid-cols-2">
           <FeatureItem icon={Hand} title="Libras com o VLibras">
             Toque no ícone azul de mãos, no lado direito da tela, para ver o conteúdo traduzido para Libras.
@@ -249,8 +291,9 @@ export function HomeScreen({ onPickPhoto, tts, voice, commandHandlerRef }) {
           <FeatureItem icon={Type} title="Letra maior">
             Use os botões A− e A+ no topo da página para mudar o tamanho da letra.
           </FeatureItem>
-          <FeatureItem icon={Contrast} title="Alto contraste">
-            O botão “Contraste”, no topo, deixa o fundo preto e as letras em branco e amarelo.
+          <FeatureItem icon={Contrast} title="Alto contraste e outras cores">
+            O botão “Contraste”, no topo, deixa o fundo preto e as letras em branco e amarelo. Nos ajustes há também as
+            cores Escuro e Suave.
           </FeatureItem>
           <FeatureItem icon={Keyboard} title="Atalhos de teclado">
             Alt+1 vai para o conteúdo, Alt+2 para o menu e Alt+3 para o rodapé (no Firefox, Alt+Shift+número).

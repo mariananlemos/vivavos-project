@@ -47,7 +47,7 @@ function TestResult({ test }) {
   );
 }
 
-export function ExamResult({ data, onListen, onHome }) {
+export function ExamResult({ data, onListen, onHome, homeLabel = 'Voltar ao início' }) {
   const tests = data.tests.map((t) => ({ ...t, showName: data.tests.length > 1 }));
   const names = data.tests.map((t) => t.name).join(', ');
 
@@ -91,7 +91,7 @@ export function ExamResult({ data, onListen, onHome }) {
       <Divider strong className="mb-3" />
       <SmallPrint>Não é diagnóstico. Não substitui o seu médico.</SmallPrint>
       <Button variant="outlinePrimary" onClick={onHome} className="mt-4">
-        Voltar ao início
+        {homeLabel}
       </Button>
     </div>
   );

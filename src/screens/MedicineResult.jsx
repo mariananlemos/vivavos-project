@@ -16,7 +16,7 @@ export function medicineSpeech(data) {
   return `${name}. Para que serve: ${bula.paraQueServe} Como devo tomar: ${bula.comoTomarBula} O que devo cuidar: ${bula.cuidadosImportantes} Posso usar com outros remédios? ${INTERACTIONS_TEXT} ${bula.avisoObrigatorio}`;
 }
 
-export function MedicineResult({ data, onListen, onHome }) {
+export function MedicineResult({ data, onListen, onHome, homeLabel = 'Voltar ao início' }) {
   const { medicine, bulaFound, bulaOfficial: bula } = data;
 
   return (
@@ -64,7 +64,7 @@ export function MedicineResult({ data, onListen, onHome }) {
         substitui o médico nem o farmacêutico.
       </SmallPrint>
       <Button variant="outlinePrimary" onClick={onHome} className="mt-4">
-        Voltar ao início
+        {homeLabel}
       </Button>
     </div>
   );

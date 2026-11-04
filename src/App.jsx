@@ -4,22 +4,45 @@ import { AccessibilityBar } from './components/AccessibilityBar';
 import { SiteFooter } from './components/SiteFooter';
 import { VoiceStatusIndicator } from './components/VoiceStatusIndicator';
 import { ConsentModal } from './components/ConsentModal';
+import { Toasts } from './components/Toasts';
+import { DimOverlay, FlashOverlay, Magnifier } from './components/ScreenAids';
 import { HomeScreen } from './screens/HomeScreen';
 import { PhotoFlow } from './screens/PhotoFlow';
+import { HistoryScreen, HistoryItemView } from './screens/HistoryScreen';
+import { AccessibilitySettings } from './screens/AccessibilitySettings';
 import { useAccessibility } from './hooks/useAccessibility';
 import { useTextToSpeech } from './hooks/useTextToSpeech';
 import { useVoiceRecognition } from './hooks/useVoiceRecognition';
+import { useHistory } from './hooks/useHistory';
+import { useNotifications } from './hooks/useNotifications';
+import { useInteractionAids } from './hooks/useInteractionAids';
+
+const CONSENT_KEY = 'vivavos-lgpd-consent-v2'; // v2: aviso do histórico guardado no aparelho
+
+// Itens do menu que são páginas próprias (os outros são seções da página inicial)
+const PAGES = { historico: 'history', ajustes: 'settings' };
+
+// Quantas vezes o microfone reabre sozinho, conforme "Tempo para responder por voz"
+const EXTRA_TRIES = { normal: 0, longo: 2, 'muito-longo': 4 };
 
 export function App() {
   const accessibility = useAccessibility();
-  const tts = useTextToSpeech(0.85); // Velocidade inicial calma para idosos (0.85x)
+  const { prefs } = accessibility;
+  const tts = useTextToSpeech(0.85, {
+    autoSpeak: prefs.autoSpeak,
+    volume: prefs.volume,
+    voiceEngine: prefs.voiceEngine,
+    pitch: prefs.pitch,
+  }); // Velocidade inicial calma para idosos (0.85x)
+  const history = useHistory();
+  const { toasts, dismiss, notify, flashKey } = useNotifications(prefs, tts);
 
   const [hasConsent, setHasConsent] = useState(() => {
-    return localStorage.getItem('vivavos-lgpd-consent') === 'true';
+    return localStorage.getItem(CONSENT_KEY) === 'true';
   });
 
-  // Fluxo atual: null = tela inicial; { kind: 'medicine' | 'exam', file }
-  const [flow, setFlow] = useState(null);
+  // Tela atual: home | flow { kind, file } | history | historyItem { item } | settings
+  const [view, setView] = useState({ name: 'home' });
   const pendingKindRef = useRef('medicine');
   const fileInputRef = useRef(null);
 
@@ -41,10 +64,14 @@ export function App() {
     }
   };
 
-  const voice = useVoiceRecognition({ onCommand: handleVoiceCommand });
+  const voice = useVoiceRecognition({
+    onCommand: handleVoiceCommand,
+    sounds: prefs.sounds,
+    extraTries: EXTRA_TRIES[prefs.answerTime] || 0,
+  });
 
   const handleAcceptConsent = () => {
-    localStorage.setItem('vivavos-lgpd-consent', 'true');
+    localStorage.setItem(CONSENT_KEY, 'true');
     setHasConsent(true);
     tts.stop();
   };
@@ -59,70 +86,137 @@ export function App() {
     const file = e.target.files && e.target.files[0];
     e.target.value = '';
     if (!file) return;
-    setFlow({ kind: pendingKindRef.current, file });
+    setView({ name: 'flow', kind: pendingKindRef.current, file });
     window.scrollTo(0, 0);
   };
 
-  // Navegação do menu: volta para a página inicial (se estiver num fluxo) e rola até a seção
+  const handleConfirmed = (kind, data) => {
+    // Sem voz no aviso: a explicação do resultado começa a ser falada logo em seguida
+    if (history.addFromResult(kind, data)) notify('Guardado no seu histórico.', { voice: false });
+  };
+
+  // Navegação do menu: páginas próprias abrem no topo; seções da página inicial rolam até o lugar
   const [scrollTarget, setScrollTarget] = useState(null);
-  const navigateTo = (sectionId) => {
-    setFlow(null);
-    setScrollTarget(sectionId);
+  const navigateTo = (id) => {
+    tts.stop();
+    if (PAGES[id]) {
+      setView({ name: PAGES[id] });
+      setScrollTarget('conteudo');
+    } else {
+      setView({ name: 'home' });
+      setScrollTarget(id);
+    }
   };
 
   useEffect(() => {
-    if (flow || !scrollTarget) return;
+    if (!scrollTarget) return;
+    if (scrollTarget !== 'conteudo' && view.name !== 'home') return;
     const section = document.getElementById(scrollTarget);
     if (section) {
-      section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      if (scrollTarget === 'conteudo') window.scrollTo(0, 0);
+      else section.scrollIntoView({ behavior: prefs.reduceMotion ? 'auto' : 'smooth', block: 'start' });
       section.focus({ preventScroll: true });
     }
     setScrollTarget(null);
-  }, [flow, scrollTarget]);
+  }, [view, scrollTarget]);
 
   const goHome = () => navigateTo('inicio');
+  const openHistoryItem = (item) => {
+    tts.stop();
+    setView({ name: 'historyItem', item });
+    setScrollTarget('conteudo');
+  };
+
+  // Gesto de deslizar para a direita: volta uma tela
+  const goBack = () => {
+    if (view.name === 'historyItem') navigateTo('historico');
+    else if (view.name !== 'home') goHome();
+  };
+
+  useInteractionAids(prefs, tts, { onSwipeBack: goBack });
+
+  const currentPage = { history: 'historico', historyItem: 'historico', settings: 'ajustes' }[view.name] || 'inicio';
+
+  const card = (children) => (
+    <div className="bg-page border-t border-line py-8 md:py-12 px-4 sm:px-6">
+      <div className="max-w-3xl mx-auto bg-surface rounded-lg border-2 border-line p-5 sm:p-8">{children}</div>
+    </div>
+  );
 
   return (
-    <div className="min-h-screen flex flex-col bg-surface text-ink font-sans">
-      {/* Sem "capture": o celular oferece tirar foto ou escolher da galeria; no computador abre o seletor de arquivos */}
-      <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChosen} />
+    <>
+      <div className="app-zoom min-h-screen flex flex-col bg-surface text-ink font-sans">
+        {/* Sem "capture": o celular oferece tirar foto ou escolher da galeria; no computador abre o seletor de arquivos */}
+        <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChosen} />
 
-      <AccessibilityBar accessibility={accessibility} tts={tts} onNavigate={navigateTo} />
-      <Header onNavigate={navigateTo} />
+        <AccessibilityBar accessibility={accessibility} tts={tts} onNavigate={navigateTo} />
+        <Header onNavigate={navigateTo} currentPage={currentPage} />
 
-      <main id="conteudo" tabIndex={-1} className="flex-1" role="main">
-        {flow ? (
-          <div className="bg-page border-t border-line py-8 md:py-12 px-4 sm:px-6">
-            <div className="max-w-3xl mx-auto bg-surface rounded-lg border-2 border-line p-5 sm:p-8">
+        <main id="conteudo" tabIndex={-1} className="flex-1" role="main">
+          {view.name === 'flow' &&
+            card(
               <PhotoFlow
-                key={flow.kind}
-                kind={flow.kind}
-                file={flow.file}
-                onRetake={() => openCamera(flow.kind)}
+                key={view.kind}
+                kind={view.kind}
+                file={view.file}
+                onRetake={() => openCamera(view.kind)}
                 onHome={goHome}
+                onConfirmed={handleConfirmed}
                 tts={tts}
                 voice={voice}
                 commandHandlerRef={screenCommandHandlerRef}
               />
-            </div>
-          </div>
-        ) : (
-          <HomeScreen
-            onPickPhoto={openCamera}
-            tts={tts}
-            voice={voice}
-            commandHandlerRef={screenCommandHandlerRef}
-          />
-        )}
-      </main>
+            )}
 
-      <SiteFooter onNavigate={navigateTo} />
+          {view.name === 'history' && (
+            <HistoryScreen
+              history={history}
+              prefs={prefs}
+              tts={tts}
+              notify={notify}
+              onHome={goHome}
+              onOpenItem={openHistoryItem}
+              onPickPhoto={openCamera}
+            />
+          )}
 
-      <VoiceStatusIndicator voice={voice} tts={tts} />
+          {view.name === 'historyItem' &&
+            card(<HistoryItemView item={view.item} tts={tts} onBack={() => navigateTo('historico')} />)}
 
-      {/* Modal de Consentimento Obrigatório LGPD */}
-      <ConsentModal isOpen={!hasConsent} onAccept={handleAcceptConsent} tts={tts} voice={voice} />
-    </div>
+          {view.name === 'settings' && (
+            <AccessibilitySettings accessibility={accessibility} tts={tts} notify={notify} onHome={goHome} />
+          )}
+
+          {view.name === 'home' && (
+            <HomeScreen
+              onPickPhoto={openCamera}
+              onNavigate={navigateTo}
+              historyCount={history.items.length}
+              tts={tts}
+              voice={voice}
+              commandHandlerRef={screenCommandHandlerRef}
+            />
+          )}
+        </main>
+
+        <SiteFooter onNavigate={navigateTo} />
+
+        <VoiceStatusIndicator
+          voice={voice}
+          tts={tts}
+          captions={{ enabled: prefs.captions, size: prefs.captionSize, style: prefs.captionStyle }}
+        />
+        <Toasts toasts={toasts} onDismiss={dismiss} />
+
+        {/* Modal de Consentimento Obrigatório LGPD */}
+        <ConsentModal isOpen={!hasConsent} onAccept={handleAcceptConsent} tts={tts} voice={voice} />
+      </div>
+
+      {/* Fora da área ampliada pelo zoom: cobrem a tela inteira */}
+      <Magnifier enabled={prefs.magnifier} size={prefs.magnifierSize} follow={prefs.magnifierFollow} />
+      <FlashOverlay flashKey={flashKey} />
+      <DimOverlay level={prefs.dim} />
+    </>
   );
 }
 

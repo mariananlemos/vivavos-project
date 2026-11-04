@@ -31,16 +31,41 @@ Projeto desenvolvido na **Universidade Federal do ABC (UFABC)** para a disciplin
 - **Confirma antes de explicar:** nada é explicado sem o “sim” da pessoa.
 - **Fonte oficial:** bula da ANVISA para remédios; para exames, só o valor de referência do laudo (sem diagnóstico).
 - **Não substitui o médico:** todas as telas avisam isso.
-- **Privacidade (LGPD):** pede consentimento e as fotos são apagadas logo depois da leitura.
+- **Privacidade (LGPD):** pede consentimento e as fotos são apagadas logo depois da leitura. O histórico guarda só o texto, só no aparelho da pessoa.
+
+## Meu histórico
+
+Tudo o que a pessoa confirma (remédio ou exame) entra no **histórico**, que fica guardado só no próprio aparelho (`localStorage`), nunca a foto. Dá para:
+
+- filtrar por remédios ou exames e procurar pelo nome;
+- rever a explicação completa ou ouvi-la de novo;
+- **anotar à mão** um remédio que toma (dose, horários) ou um exame que fez, com sugestões de nomes para digitar menos;
+- apagar um item, apagar tudo ou desligar o histórico.
 
 ## Acessibilidade
 
-Pensado para o público idoso e seguindo as recomendações do governo (eMAG):
+Pensado para o público idoso e seguindo as recomendações do governo (eMAG).
+
+A página **Ajustes de acessibilidade** reúne as diretrizes em 8 categorias, cada uma com uma explicação “em outras palavras”:
+
+| Categoria | O que a pessoa ajusta |
+| --- | --- |
+| 1. Ambiente | Cores (padrão, alto contraste, escuro, suave), brilho, parar animações, tempo para responder por voz e tempo dos avisos |
+| 2. Texto | Tipo de letra (Atkinson, Lexend, Verdana), tamanho, negrito, cor da letra, espaço entre linhas e entre letras |
+| 3. Som | Falar sozinho ou só quando pedir, volume, velocidade, bipes, leitor de tela por toque (básico e “1º toque lê, 2º escolhe”), voz natural ou do aparelho, tom, leitura ao digitar |
+| 4. Vídeo e legendas | Legenda da voz (tamanho e cor) e botão do VLibras |
+| 5. Zoom | Ampliar a tela inteira e lupa que acompanha o dedo, o mouse ou o teclado |
+| 6. Entrada de dados | Cursor grande, foco reforçado, botões maiores, ignorar toque repetido (tremor) e sugestões ao digitar |
+| 7. Notificações e alertas | Avisos por voz, tela piscando, som e vibração |
+| 8. Gestos | Deslizar para a direita para voltar e chacoalhar o celular para parar a voz |
+
+Além disso:
 
 - **Libras** com o [VLibras](https://github.com/spbgovbr-vlibras) (widget oficial do Governo Federal).
 - **Voz em português do Brasil** com a API de voz da OpenAI, com a voz do navegador como reserva. Ela só fala quando a pessoa toca em um botão de ouvir, e a velocidade é ajustável.
 - **Comandos de voz:** “sim”, “não”, “de novo”, “mais devagar”, “mais rápido”.
-- **Letra maior** (A− / A+) e **alto contraste**.
+- **Letra maior** (A− / A+) e **alto contraste** direto na barra do topo.
+- **Menu suspenso** no cabeçalho, que abre e fecha pelo teclado (setas e Esc).
 - **Atalhos de teclado:** Alt+1 (conteúdo), Alt+2 (menu), Alt+3 (rodapé).
 - Botões grandes, textos curtos e fonte Atkinson Hyperlegible, feita para leitura fácil.
 
@@ -105,9 +130,9 @@ api/
   speak.js               voz em português do Brasil (OpenAI)
   _lib/                  visão, bulário, avaliação de exames e proteções
 src/
-  screens/               telas (início, fluxo da foto, resultados)
-  components/            cabeçalho, barra de acessibilidade, rodapé, botões
-  hooks/                 voz (falar e ouvir) e acessibilidade
+  screens/               telas (início, fluxo da foto, resultados, histórico, ajustes)
+  components/            cabeçalho com menu, logo, barra de acessibilidade, avisos, lupa, rodapé, botões
+  hooks/                 voz (falar e ouvir), ajustes de acessibilidade, histórico, avisos e gestos
 ```
 
 ---

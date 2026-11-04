@@ -25,7 +25,7 @@ const FLOWS = {
  * PROCESSING → (ILLEGIBLE | CONFIRMING) → RESULT, com RETAKE e ERROR como saídas.
  * Nada é explicado antes de a pessoa confirmar o que foi lido.
  */
-export function PhotoFlow({ kind, file, onRetake, onHome, tts, voice, commandHandlerRef }) {
+export function PhotoFlow({ kind, file, onRetake, onHome, onConfirmed, tts, voice, commandHandlerRef }) {
   const flow = FLOWS[kind];
   const { speak, stop } = tts;
   const { startListening, stopListening } = voice;
@@ -95,6 +95,9 @@ export function PhotoFlow({ kind, file, onRetake, onHome, tts, voice, commandHan
     stop();
     stopListening();
     setPhase('RESULT');
+    // Só o que a pessoa confirmou vai para o histórico
+    onConfirmed?.(kind, data);
+    speak(flow.resultSpeech(data));
   };
 
   const handleRejectByVoice = () => {
@@ -106,11 +109,11 @@ export function PhotoFlow({ kind, file, onRetake, onHome, tts, voice, commandHan
   const handleRepeatConfirmation = () => {
     if (!data?.confirmation) return;
     stopListening();
-    speak(data.confirmation.voiceText, () => startListening());
+    speak(data.confirmation.voiceText, () => startListening(), { manual: true });
   };
 
   const handleListenResult = () => {
-    if (data) speak(flow.resultSpeech(data));
+    if (data) speak(flow.resultSpeech(data), null, { manual: true });
   };
 
   const handleRetake = () => {
@@ -197,7 +200,7 @@ export function PhotoFlow({ kind, file, onRetake, onHome, tts, voice, commandHan
           <Button icon={Camera} onClick={handleRetake}>
             {isError ? 'Tentar de novo' : 'Tirar outra foto'}
           </Button>
-          <Button variant="accent" icon={Volume2} onClick={() => speak(`${title}. ${reason || ''} ${isError ? '' : flow.retakeHint}`)}>
+          <Button variant="accent" icon={Volume2} onClick={() => speak(`${title}. ${reason || ''} ${isError ? '' : flow.retakeHint}`, null, { manual: true })}>
             Ouvir
           </Button>
           <Button variant="outlinePrimary" onClick={handleHome}>

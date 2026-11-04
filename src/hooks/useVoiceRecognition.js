@@ -1,32 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-
-/**
- * Emite um bipe suave usando a Web Audio API para dar retorno tátil/sonoro ao idoso
- * de que o microfone abriu ou fechou.
- */
-function playAudioCue(freq = 440, duration = 0.12) {
-  try {
-    const AudioContext = window.AudioContext || window.webkitAudioContext;
-    if (!AudioContext) return;
-    const ctx = new AudioContext();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(freq, ctx.currentTime);
-
-    gain.gain.setValueAtTime(0.08, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
-
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-
-    osc.start();
-    osc.stop(ctx.currentTime + duration);
-  } catch {
-    // Falha silenciosa caso áudio seja bloqueado antes da primeira interação
-  }
-}
+import { playTone } from '../utils/sound';
 
 /**
  * Classifica a fala do idoso em um comando simples.
@@ -50,6 +23,12 @@ export function classifyCommand(text) {
   return 'SPEECH';
 }
 
+/**
+ * Escuta comandos em português do Brasil.
+ * - sounds: toca bipes quando o microfone abre e fecha.
+ * - extraTries: quantas vezes o microfone reabre sozinho se a pessoa ainda não falou
+ *   (ajuste "Tempo para responder", para quem precisa de mais tempo).
+ */
 export function useVoiceRecognition(options = {}) {
   const { onCommand } = options;
   const [isListening, setIsListening] = useState(false);
@@ -58,10 +37,19 @@ export function useVoiceRecognition(options = {}) {
   const [isSupported, setIsSupported] = useState(true);
   const recognitionRef = useRef(null);
   const onCommandRef = useRef(onCommand);
+  const optionsRef = useRef(options);
+  const triesLeftRef = useRef(0);
+  const restartRef = useRef(false);
 
   useEffect(() => {
     onCommandRef.current = onCommand;
   }, [onCommand]);
+
+  optionsRef.current = options;
+
+  const cue = (freq, duration) => {
+    if (optionsRef.current.sounds !== false) playTone(freq, duration);
+  };
 
   useEffect(() => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -81,7 +69,7 @@ export function useVoiceRecognition(options = {}) {
     recognition.onstart = () => {
       setIsListening(true);
       setError(null);
-      playAudioCue(580, 0.1); // Bipe de início
+      cue(580, 0.1); // Bipe de início
     };
 
     recognition.onresult = (event) => {
@@ -96,8 +84,14 @@ export function useVoiceRecognition(options = {}) {
     };
 
     recognition.onerror = (event) => {
+      // A pessoa ainda não falou: reabre o microfone em vez de desistir
+      if (event.error === 'no-speech' && triesLeftRef.current > 0) {
+        triesLeftRef.current -= 1;
+        restartRef.current = true;
+        return;
+      }
       setIsListening(false);
-      playAudioCue(320, 0.15); // Bipe baixo de aviso
+      cue(320, 0.15); // Bipe baixo de aviso
       if (event.error === 'not-allowed') {
         setError('Por favor, autorize o microfone para conversar por voz.');
       } else if (event.error === 'no-speech') {
@@ -108,6 +102,15 @@ export function useVoiceRecognition(options = {}) {
     };
 
     recognition.onend = () => {
+      if (restartRef.current) {
+        restartRef.current = false;
+        try {
+          recognition.start();
+          return;
+        } catch {
+          // Não deu para reabrir: encerra normalmente
+        }
+      }
       setIsListening(false);
     };
 
@@ -124,6 +127,7 @@ export function useVoiceRecognition(options = {}) {
     if (recognitionRef.current && !isListening) {
       setTranscript('');
       setError(null);
+      triesLeftRef.current = optionsRef.current.extraTries || 0;
       try {
         recognitionRef.current.start();
       } catch (e) {
@@ -134,6 +138,8 @@ export function useVoiceRecognition(options = {}) {
 
   const stopListening = useCallback(() => {
     if (recognitionRef.current && isListening) {
+      triesLeftRef.current = 0;
+      restartRef.current = false;
       recognitionRef.current.stop();
     }
   }, [isListening]);

@@ -1,9 +1,10 @@
 import React from 'react';
-import { Contrast } from 'lucide-react';
+import { Contrast, Settings2 } from 'lucide-react';
 import { MIN_FONT, MAX_FONT } from '../hooks/useAccessibility';
 
-const chip =
-  'min-h-[2.25rem] min-w-[2.25rem] md:min-h-[2.5rem] md:min-w-[2.5rem] px-2 rounded-md border font-bold hover:border-strong disabled:opacity-40 transition';
+const chipBase =
+  'min-h-[2.25rem] min-w-[2.25rem] md:min-h-[2.5rem] md:min-w-[2.5rem] px-2 rounded-md border font-bold disabled:opacity-40 transition';
+const chip = `${chipBase} border-line bg-surface hover:border-strong`;
 
 const skipLink =
   'sr-only focus:not-sr-only md:not-sr-only text-primary font-bold underline-offset-2 hover:underline focus:px-2 focus:py-1';
@@ -39,20 +40,19 @@ export function AccessibilityBar({ accessibility, tts, onNavigate }) {
 
         <div role="toolbar" aria-label="Ajustes de acessibilidade" className="flex flex-wrap items-center gap-1 md:gap-1.5 md:ml-auto">
           <a
-            href="#acessibilidade"
+            href="#ajustes"
             onClick={(e) => {
               e.preventDefault();
-              onNavigate('acessibilidade');
+              onNavigate('ajustes');
             }}
-            className="px-2 min-h-[2.5rem] inline-flex items-center font-bold text-primary hover:underline"
+            className="px-2 min-h-[2.5rem] inline-flex items-center gap-1.5 font-bold text-primary hover:underline"
           >
-            Acessibilidade
+            <Settings2 className="w-4 h-4" strokeWidth={2.5} aria-hidden="true" />
+            Ajustes de acessibilidade
           </a>
 
           <button
-            className={`${chip} inline-flex items-center gap-1.5 ${
-              highContrast ? 'bg-primary text-on-primary border-primary' : 'bg-surface border-line'
-            }`}
+            className={`${highContrast ? `${chipBase} bg-primary text-on-primary border-primary` : chip} inline-flex items-center gap-1.5`}
             onClick={toggleHighContrast}
             aria-pressed={highContrast}
           >
@@ -61,22 +61,22 @@ export function AccessibilityBar({ accessibility, tts, onNavigate }) {
           </button>
 
           <span className="inline-flex items-center gap-1" role="group" aria-label="Tamanho da letra">
-            <button className={`${chip} bg-surface border-line`} onClick={decreaseFontSize} disabled={fontSize <= MIN_FONT} aria-label="Diminuir tamanho da letra">
+            <button className={chip} onClick={decreaseFontSize} disabled={fontSize <= MIN_FONT} aria-label="Diminuir tamanho da letra">
               A−
             </button>
-            <button className={`${chip} bg-surface border-line`} onClick={increaseFontSize} disabled={fontSize >= MAX_FONT} aria-label="Aumentar tamanho da letra">
+            <button className={chip} onClick={increaseFontSize} disabled={fontSize >= MAX_FONT} aria-label="Aumentar tamanho da letra">
               A+
             </button>
           </span>
 
           <span className="inline-flex items-center gap-1" role="group" aria-label="Velocidade da voz">
-            <button className={`${chip} bg-surface border-line`} onClick={decreaseSpeed} disabled={rate <= 0.6} aria-label="Voz mais devagar">
+            <button className={chip} onClick={decreaseSpeed} disabled={rate <= 0.6} aria-label="Voz mais devagar">
               🐢
             </button>
             <span className="tabular-nums w-11 text-center" aria-label={`Velocidade da voz ${Number(rate.toFixed(2))}`}>
               {Number(rate.toFixed(2))}x
             </span>
-            <button className={`${chip} bg-surface border-line`} onClick={increaseSpeed} disabled={rate >= 1.3} aria-label="Voz mais rápida">
+            <button className={chip} onClick={increaseSpeed} disabled={rate >= 1.3} aria-label="Voz mais rápida">
               🐇
             </button>
           </span>
