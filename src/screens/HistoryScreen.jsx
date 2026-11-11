@@ -2,6 +2,7 @@ import React, { useId, useMemo, useRef, useState } from 'react';
 import { Camera, Eye, FileText, History, PencilLine, Pill, Save, Search, Trash2, Volume2 } from 'lucide-react';
 import { BackLink, Button, Notice, StatusPill, Title } from '../components/ui';
 import { ChoiceGroup, Switch } from '../components/controls';
+import { ExamTrends, trendSpeech } from '../components/ExamTrends';
 import { MedicineResult, medicineSpeech } from './MedicineResult';
 import { ExamResult, examSpeech } from './ExamResult';
 
@@ -407,6 +408,10 @@ export function HistoryScreen({ history, prefs, tts, notify, onHome, onOpenItem,
               </div>
             </div>
           </div>
+        )}
+
+        {filter !== 'medicine' && !query.trim() && (
+          <ExamTrends items={items} onListen={(trend) => tts.speak(trendSpeech(trend), null, { manual: true })} />
         )}
 
         <div className="mt-6">

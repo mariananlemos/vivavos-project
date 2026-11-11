@@ -66,6 +66,10 @@ export function evaluateResult(test) {
     valueText: String(test.valueText),
     unit: test.unit || null,
     refText: test.refText || null,
+    // Números guardados no histórico para acompanhar a evolução do exame
+    value,
+    refMin,
+    refMax,
     status: statusKey,
     statusLabel: status.label,
     tone: status.tone,
