@@ -7,6 +7,7 @@ import { ConsentModal } from './components/ConsentModal';
 import { Toasts } from './components/Toasts';
 import { DimOverlay, FlashOverlay, Magnifier } from './components/ScreenAids';
 import { HomeScreen } from './screens/HomeScreen';
+import { AboutScreen } from './screens/AboutScreen';
 import { PhotoFlow } from './screens/PhotoFlow';
 import { HistoryScreen, HistoryItemView } from './screens/HistoryScreen';
 import { AccessibilitySettings } from './screens/AccessibilitySettings';
@@ -19,8 +20,10 @@ import { useInteractionAids } from './hooks/useInteractionAids';
 
 const CONSENT_KEY = 'vivavos-lgpd-consent-v3'; // v3: aviso cita a OpenAI, então quem já aceitou vê o aviso de novo
 
-// Itens do menu que são páginas próprias (os outros são seções da página inicial)
+// Itens do menu que são páginas próprias
 const PAGES = { historico: 'history', ajustes: 'settings' };
+// Itens do menu que são seções da página Como funciona (abrem a página já rolada até a seção)
+const ABOUT_SECTIONS = ['como-funciona', 'seguranca', 'acessibilidade'];
 
 // Quantas vezes o microfone reabre sozinho, conforme "Tempo para responder por voz"
 const EXTRA_TRIES = { normal: 0, longo: 2, 'muito-longo': 4 };
@@ -41,7 +44,7 @@ export function App() {
     return localStorage.getItem(CONSENT_KEY) === 'true';
   });
 
-  // Tela atual: home | flow { kind, file } | history | historyItem { item } | settings
+  // Tela atual: home | flow { kind, file } | history | historyItem { item } | settings | about
   const [view, setView] = useState({ name: 'home' });
   const pendingKindRef = useRef('medicine');
   const fileInputRef = useRef(null);
@@ -95,13 +98,16 @@ export function App() {
     if (history.addFromResult(kind, data)) notify('Guardado no seu histórico.', { voice: false });
   };
 
-  // Navegação do menu: páginas próprias abrem no topo; seções da página inicial rolam até o lugar
+  // Navegação do menu: páginas próprias abrem no topo; seções (da Como funciona ou do início) rolam até o lugar
   const [scrollTarget, setScrollTarget] = useState(null);
   const navigateTo = (id) => {
     tts.stop();
     if (PAGES[id]) {
       setView({ name: PAGES[id] });
       setScrollTarget('conteudo');
+    } else if (ABOUT_SECTIONS.includes(id)) {
+      setView({ name: 'about' });
+      setScrollTarget(id === 'como-funciona' ? 'conteudo' : id);
     } else {
       setView({ name: 'home' });
       setScrollTarget(id);
@@ -110,7 +116,7 @@ export function App() {
 
   useEffect(() => {
     if (!scrollTarget) return;
-    if (scrollTarget !== 'conteudo' && view.name !== 'home') return;
+    if (scrollTarget !== 'conteudo' && view.name !== 'home' && view.name !== 'about') return;
     const section = document.getElementById(scrollTarget);
     if (section) {
       if (scrollTarget === 'conteudo') window.scrollTo(0, 0);
@@ -135,7 +141,8 @@ export function App() {
 
   useInteractionAids(prefs, tts, { onSwipeBack: goBack });
 
-  const currentPage = { history: 'historico', historyItem: 'historico', settings: 'ajustes' }[view.name] || 'inicio';
+  const currentPage =
+    { history: 'historico', historyItem: 'historico', settings: 'ajustes', about: 'como-funciona' }[view.name] || 'inicio';
 
   const card = (children) => (
     <div className="bg-page border-t border-line py-8 md:py-12 px-4 sm:px-6">
@@ -186,6 +193,8 @@ export function App() {
           {view.name === 'settings' && (
             <AccessibilitySettings accessibility={accessibility} tts={tts} notify={notify} onHome={goHome} />
           )}
+
+          {view.name === 'about' && <AboutScreen onNavigate={navigateTo} onHome={goHome} />}
 
           {view.name === 'home' && (
             <HomeScreen
