@@ -123,16 +123,22 @@ export function Header({ onNavigate, currentPage }) {
 
   return (
     <header role="banner" className="sticky top-0 z-30 bg-surface border-t-[6px] border-primary border-b-2 border-b-strong">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
-        <a href="#inicio" onClick={go('inicio')} className="flex items-center gap-2.5 min-w-0" aria-label="Vivavós, página inicial">
+      {/* Com letra grande (A+), o menu desce para a linha de baixo em vez de ficar por cima do nome */}
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+        <a
+          href="#inicio"
+          onClick={go('inicio')}
+          className="flex flex-1 basis-[9rem] items-center gap-2.5 min-w-0"
+          aria-label="Vivavós, página inicial"
+        >
           <Logo className="w-12 h-12 shrink-0" />
-          <span className="min-w-0">
+          <span className="min-w-0 break-words">
             <span className="block text-[1.4rem] font-bold leading-none">Vivavós</span>
             <span className="block text-[0.8rem] text-muted mt-0.5">Informação para o paciente</span>
           </span>
         </a>
 
-        <nav id="menu" aria-label="Menu principal" tabIndex={-1} className="flex items-center gap-2 shrink-0">
+        <nav id="menu" aria-label="Menu principal" tabIndex={-1} className="flex items-center gap-2 shrink-0 ml-auto">
           <a
             href="#historico"
             onClick={go('historico')}
