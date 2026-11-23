@@ -1,3 +1,5 @@
+import { findAnvisaRegistration } from './registroAnvisa.js';
+
 /**
  * Base de dados oficial verificada com dados de Bulas de Paciente registradas na ANVISA
  * para os medicamentos mais frequentes da população idosa e da atenção básica (SUS).
@@ -145,7 +147,7 @@ function normalizeString(str) {
  *
  * @param {string} medicineName - Nome extraído da caixa
  * @param {string} [activeIngredient] - Princípio ativo (opcional)
- * @returns {Promise<{ found: boolean, bula?: object, message?: string }>}
+ * @returns {Promise<{ found: boolean, bula?: object, registro?: object, message?: string }>}
  */
 export async function searchOfficialBula(medicineName, activeIngredient = '') {
   if (!medicineName && !activeIngredient) {
@@ -180,40 +182,15 @@ export async function searchOfficialBula(medicineName, activeIngredient = '') {
     };
   }
 
-  // 2. Se não encontrou na base oficial local, tenta consulta pública na API de bulas da ANVISA
-  try {
-    const cleanName = encodeURIComponent(medicineName.split(' ')[0]);
-    const anvisaUrl = `https://bula.vercel.app/pesquisar?nome=${cleanName}`;
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3500);
-
-    const res = await fetch(anvisaUrl, { signal: controller.signal }).catch(() => null);
-    clearTimeout(timeoutId);
-
-    if (res && res.ok) {
-      const data = await res.json().catch(() => null);
-      if (Array.isArray(data?.content) && data.content.length > 0) {
-        const item = data.content[0];
-        return {
-          found: true,
-          bula: {
-            nomeOficial: item.nomeProduto || medicineName,
-            principioAtivo: item.principioAtivo || activeIngredient || 'Informado na bula',
-            classeTerapeutica: 'Medicamento registrado na ANVISA',
-            registroAnvisa: item.numeroRegistro || 'Registro Ativo ANVISA',
-            fonte: 'Bulário Eletrônico da ANVISA',
-            paraQueServe: `Medicamento registrado na ANVISA sob o nome ${item.nomeProduto}. Consulte as indicações específicas aprovadas pelo seu médico.`,
-            comoTomarBula: 'Siga rigorosamente a dosagem e horários indicados na receita médica entregue pelo seu profissional de saúde.',
-            cuidadosImportantes: 'Mantenha fora do alcance de crianças e protegido de calor e umidade.',
-            avisoObrigatorio:
-              'Atenção: esta explicação é baseada no registro oficial da Anvisa. Ela NÃO substitui as orientações do seu médico ou farmacêutico. Nunca altere a dosagem.',
-          },
-        };
-      }
-    }
-  } catch (e) {
-    // Falha silenciosa no fallback online
-    console.warn('Erro ao consultar API externa de bulas:', e.message);
+  // 2. Sem explicação simplificada: confere se o remédio tem registro ativo na ANVISA
+  //    (Dados Abertos da ANVISA, gerados por scripts/atualizar-registros-anvisa.mjs)
+  const registro = findAnvisaRegistration(medicineName, activeIngredient);
+  if (registro) {
+    return {
+      found: false,
+      registro,
+      message: `Encontrei ${registro.nomeProduto} no registro oficial da Anvisa, mas ainda não tenho a explicação da bula dele em palavras simples. Por segurança, não passo orientações sem a bula. Peça ao seu farmacêutico ou médico para explicar, ou abra a bula oficial.`,
+    };
   }
 
   // Se realmente não foi localizado em fonte oficial comprovada:

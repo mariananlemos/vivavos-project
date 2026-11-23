@@ -100,6 +100,8 @@ export default async function handler(req, res) {
       bulaOfficial: bulaResult.found ? bulaResult.bula : null,
       bulaFound: bulaResult.found,
       bulaMessageIfNotReceived: bulaResult.found ? null : bulaResult.message,
+      // Sem bula simplificada, mas com registro ativo na ANVISA (sem orientação de uso)
+      registroAnvisa: bulaResult.registro || null,
       usingMock: !hasApiKey,
     });
   } catch (error) {

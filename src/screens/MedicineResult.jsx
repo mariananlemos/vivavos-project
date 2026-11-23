@@ -1,5 +1,5 @@
 import React from 'react';
-import { Volume2 } from 'lucide-react';
+import { ExternalLink, Volume2 } from 'lucide-react';
 import { BackLink, Button, Divider, Notice, NumberedSection, SmallPrint, Title } from '../components/ui';
 
 const INTERACTIONS_TEXT = 'Conte ao seu médico ou ao farmacêutico todos os remédios que você usa.';
@@ -7,6 +7,10 @@ const INTERACTIONS_TEXT = 'Conte ao seu médico ou ao farmacêutico todos os rem
 export function medicineSpeech(data) {
   const name = `${data.medicine.name}${data.medicine.dosage ? ` ${data.medicine.dosage}` : ''}`;
   if (!data.bulaFound || !data.bulaOfficial) {
+    const reg = data.registroAnvisa;
+    if (reg) {
+      return `${data.bulaMessageIfNotReceived} Princípio ativo: ${reg.principioAtivo}. Classe na Anvisa: ${reg.classeTerapeutica}.`;
+    }
     return (
       data.bulaMessageIfNotReceived ||
       'Não encontrei a bula oficial deste remédio no registro da Anvisa. Por segurança, consulte seu farmacêutico ou médico.'
@@ -17,7 +21,12 @@ export function medicineSpeech(data) {
 }
 
 export function MedicineResult({ data, onListen, onHome, homeLabel = 'Voltar ao início' }) {
-  const { medicine, bulaFound, bulaOfficial: bula } = data;
+  const { medicine, bulaFound, bulaOfficial: bula, registroAnvisa: registro } = data;
+  const fonte = bula
+    ? `${bula.fonte}${bula.registroAnvisa ? ` (${bula.registroAnvisa})` : ''}`
+    : registro
+      ? registro.fonte
+      : 'bula do medicamento';
 
   return (
     <div>
@@ -26,7 +35,9 @@ export function MedicineResult({ data, onListen, onHome, homeLabel = 'Voltar ao 
         {medicine.name}
         {medicine.dosage ? ` ${medicine.dosage}` : ''}
       </Title>
-      <p className="text-muted mt-1 mb-4">As informações da bula, em palavras simples.</p>
+      <p className="text-muted mt-1 mb-4">
+        {bula ? 'As informações da bula, em palavras simples.' : 'O que encontrei sobre este remédio.'}
+      </p>
 
       <Button variant="accent" icon={Volume2} onClick={onListen}>
         Ouvir explicação
@@ -49,6 +60,38 @@ export function MedicineResult({ data, onListen, onHome, homeLabel = 'Voltar ao 
             {INTERACTIONS_TEXT}
           </NumberedSection>
         </div>
+      ) : registro ? (
+        <div className="py-4 space-y-4">
+          <Notice label="Remédio registrado na Anvisa.">
+            Ainda não tenho a explicação da bula dele em palavras simples. Por segurança, não passo orientações de
+            uso. Peça ao seu farmacêutico ou médico para explicar.
+          </Notice>
+          <dl className="text-[1rem] leading-relaxed space-y-2">
+            <div>
+              <dt className="font-bold">Princípio ativo</dt>
+              <dd>{registro.principioAtivo}</dd>
+            </div>
+            <div>
+              <dt className="font-bold">Classe na Anvisa</dt>
+              <dd>{registro.classeTerapeutica}</dd>
+            </div>
+            {registro.registroAnvisa && (
+              <div>
+                <dt className="font-bold">Registro</dt>
+                <dd>{registro.registroAnvisa}</dd>
+              </div>
+            )}
+          </dl>
+          <a
+            href={registro.linkBulario}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full min-h-[3.25rem] px-5 py-3 rounded-full font-bold text-[1.05rem] flex items-center justify-center gap-2.5 bg-surface text-primary border-2 border-primary hover:bg-primary-soft"
+          >
+            <ExternalLink className="w-6 h-6 shrink-0" strokeWidth={2.5} aria-hidden="true" />
+            <span>Abrir bula oficial no site da Anvisa</span>
+          </a>
+        </div>
       ) : (
         <div className="py-4">
           <Notice label="Bula oficial não encontrada.">
@@ -60,7 +103,7 @@ export function MedicineResult({ data, onListen, onHome, homeLabel = 'Voltar ao 
 
       <Divider strong className="mb-3" />
       <SmallPrint>
-        Fonte: {bula ? `${bula.fonte}${bula.registroAnvisa ? ` (${bula.registroAnvisa})` : ''}` : 'bula do medicamento'}. Não
+        Fonte: {fonte}. Não
         substitui o médico nem o farmacêutico.
       </SmallPrint>
       <Button variant="outlinePrimary" onClick={onHome} className="mt-4">
