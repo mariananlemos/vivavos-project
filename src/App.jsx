@@ -17,7 +17,7 @@ import { useHistory } from './hooks/useHistory';
 import { useNotifications } from './hooks/useNotifications';
 import { useInteractionAids } from './hooks/useInteractionAids';
 
-const CONSENT_KEY = 'vivavos-lgpd-consent-v2'; // v2: aviso do histórico guardado no aparelho
+const CONSENT_KEY = 'vivavos-lgpd-consent-v3'; // v3: aviso cita a OpenAI, então quem já aceitou vê o aviso de novo
 
 // Itens do menu que são páginas próprias (os outros são seções da página inicial)
 const PAGES = { historico: 'history', ajustes: 'settings' };

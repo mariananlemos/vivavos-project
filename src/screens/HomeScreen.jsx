@@ -250,8 +250,8 @@ export function HomeScreen({ onPickPhoto, onNavigate, historyCount, tts, voice, 
             As explicações ajudam a ler. Quem orienta o tratamento é o seu médico ou farmacêutico.
           </FeatureItem>
           <FeatureItem icon={Lock} title="Privacidade (LGPD)">
-            As fotos são lidas na hora e apagadas em seguida. O histórico guarda só o texto, só neste aparelho, e você
-            apaga quando quiser.
+            Para ler, a foto é enviada à OpenAI, e o Vivavós não guarda as fotos. O histórico guarda só o texto, só
+            neste aparelho, e você apaga quando quiser.
           </FeatureItem>
           <FeatureItem icon={ShieldCheck} title="Sem cadastro">
             Você não precisa criar conta nem informar dados pessoais.
